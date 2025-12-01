@@ -12,12 +12,13 @@
             theme: {
                 extend: {
                     colors: {
-                        'raspberry': '#c53051', // Un color inspirado en el logo de Raspberry Pi
-                        'dark-bg': '#1e293b', // Fondo principal oscuro
-                        'card-bg': '#334155', // Fondo de tarjetas más claro que el principal
+                        'raspberry': '#c53051', 
+                        'dark-bg': '#1e293b', 
+                        'card-bg': '#334155', 
                         'success': '#10b981',
                         'warning': '#f59e0b',
                         'info': '#3b82f6',
+                        'error': '#ef4444', 
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
@@ -27,32 +28,18 @@
         }
     </script>
     <style>
-        /* Estilos personalizados para la apariencia general (Tema Oscuro) */
+        /* Estilos generales (Tema Oscuro) */
         body {
-            background-color: #0f172a; /* Slate 900 - Fondo oscuro profundo */
+            background-color: #0f172a; 
             min-height: 100vh;
             display: flex;
             align-items: flex-start; 
             justify-content: center;
             padding: 2rem 0;
-            color: #e2e8f0; /* Texto claro */
+            color: #e2e8f0; 
         }
         .card-shadow {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-        }
-        /* Clase para animar la transición de contenido */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* Estilos para asegurar que los elementos del Plan de Compra se vean bien */
-        input, select {
-             background-color: #1e293b !important; /* Asegurar fondo oscuro en inputs */
-             border-color: #475569 !important; /* Borde visible */
-             color: #e2e8f0 !important; /* Texto claro */
+            box-shadow: 0 10px 10px -2px rgba(0, 0, 0, 0.4), 0 3px 5px -1px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -61,766 +48,107 @@
     <!-- Contenedor Principal de la App (Tema Oscuro) -->
     <div id="app-container" class="bg-gray-800 card-shadow rounded-xl p-8 md:p-12 w-11/12 max-w-4xl mx-auto border-t-4 border-raspberry">
         
-        <!-- Cabecera Común -->
+        <!-- Cabecera y Título (Tono Serio) -->
         <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-2 text-center">
             Vaquita Raspberry Pi 5
         </h1>
-        <div class="flex flex-col items-center justify-center mb-6">
-            <span class="text-5xl" role="img" aria-label="Alcancia">💰</span>
-            <p id="auth-status" class="text-xs text-gray-400 mt-2">Cargando...</p>
+        <div class="flex flex-col items-center justify-center mb-10">
+            <p class="text-lg text-gray-400 mt-2">Documento de Acuerdos Financieros y Logísticos</p>
         </div>
 
-        <!-- Contenido Dinámico de la Aplicación -->
-        <div id="app-content" class="fade-in min-h-[400px]">
-            <!-- El contenido inicial se cargará aquí vía JS -->
+        <!-- Contenido Combinado de la Aplicación -->
+        <div id="app-content">
+            <!-- Esta sección se llenará con todo el contenido descriptivo -->
         </div>
-
-        <!-- Barra de Navegación (para cuando el Plan de Compra esté activo) -->
-        <div id="navbar" class="hidden mt-8 pt-4 border-t border-gray-700 flex justify-center space-x-4">
-            <button onclick="navigateTo('home')" class="nav-button active:bg-raspberry active:text-white text-gray-400 hover:text-raspberry font-medium py-2 px-4 rounded-lg transition duration-150">
-                <i class="fas fa-home"></i> Inicio
-            </button>
-            <button onclick="navigateTo('plan')" class="nav-button text-gray-400 hover:text-raspberry font-medium py-2 px-4 rounded-lg transition duration-150">
-                <i class="fas fa-money-bill-wave"></i> Plan de Compra
-            </button>
-            <button onclick="navigateTo('servicios')" class="nav-button text-gray-400 hover:text-raspberry font-medium py-2 px-4 rounded-lg transition duration-150">
-                <i class="fas fa-server"></i> Servicios
-            </button>
-            <button onclick="navigateTo('devolucion')" class="nav-button text-gray-400 hover:text-raspberry font-medium py-2 px-4 rounded-lg transition duration-150">
-                <i class="fas fa-undo"></i> Plan de Devolución
-            </button>
-        </div>
-        
-        <!-- Pie de página simple -->
-        <p class="mt-8 text-center text-sm text-gray-500">
-            Coordinando la compra inteligente de tecnología.
-        </p>
-
     </div>
 
-    <!-- Script de Inicialización y Lógica de la Aplicación -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // Habilitar logs de Firebase (opcional, pero útil para depuración)
-        setLogLevel('debug');
-
-        // --- Variables Globales y Setup de Firebase ---
-        let app;
-        let db;
-        let auth;
-        let currentUserId = null;
-        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const FIREBASE_CONFIG = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const INITIAL_AUTH_TOKEN = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
-        const FIREBASE_COLLECTION_PATH = `artifacts/${APP_ID}/public/data/purchase_plan`;
-        const FIREBASE_DOC_ID = 'main_plan';
-
-        // Estado de la aplicación
-        let appState = {
-            view: 'home',
-            planData: null,
-            isAuthReady: false,
+    <!-- Script de Lógica de Vistas (Estática) -->
+    <script>
+        // --- Datos de Referencia Estáticos ---
+        const PLAN_DATA = {
+            costUSD: 150.00,
+            exchangeRateCLP: 950.00,
+            participantCount: 3
         };
+        
+        const totalCost = PLAN_DATA.costUSD * PLAN_DATA.exchangeRateCLP;
+        const sharePerPerson = totalCost / PLAN_DATA.participantCount;
 
-        // --- FUNCIONES DE AUTENTICACIÓN Y CONFIGURACIÓN ---
-
-        async function initFirebase() {
-            if (!FIREBASE_CONFIG) {
-                document.getElementById('auth-status').textContent = "ERROR: Configuración de Firebase no encontrada.";
-                return;
-            }
-            
-            try {
-                app = initializeApp(FIREBASE_CONFIG);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Autenticación
-                if (INITIAL_AUTH_TOKEN) {
-                    // La variable correcta es INITIAL_AUTH_TOKEN
-                    await signInWithCustomToken(auth, INITIAL_AUTH_TOKEN); 
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // Listener de estado de autenticación
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentUserId = user.uid;
-                        appState.isAuthReady = true;
-                        document.getElementById('auth-status').textContent = `Conectado como: ${currentUserId.substring(0, 8)}...`;
-                        
-                        // Una vez autenticado, cargamos la vista inicial y los datos
-                        renderView(appState.view);
-                        setupPlanDataListener();
-                    } else {
-                        currentUserId = null;
-                        appState.isAuthReady = false;
-                        document.getElementById('auth-status').textContent = "Desconectado. Por favor, recarga.";
-                    }
-                });
-
-            } catch (error) {
-                console.error("Error al inicializar Firebase o autenticar:", error);
-                document.getElementById('auth-status').textContent = `ERROR de Conexión. ${error.message}`;
-            }
-        }
-
-        // --- ESTRUCTURAS DE VISTA HTML ---
+        // --- FUNCIONES DE VISTA COMBINADAS ---
 
         function getHomeViewHtml() {
             return `
-                <!-- Explicación del Plan de Compra -->
-                <div class="mb-10 p-6 bg-indigo-900/50 rounded-lg border border-indigo-700">
-                    <h2 class="text-2xl font-semibold text-white mb-3">
-                        ¡Bienvenido/a a la Planeación Colaborativa!
+                <!-- Introducción General -->
+                <section class="mb-12 p-6 bg-indigo-900/50 rounded-xl border border-indigo-700">
+                    <h2 class="text-2xl font-semibold text-white mb-3 border-b border-indigo-700 pb-2">
+                        Acerca de este Plan de Compra
                     </h2>
                     <p class="text-lg text-gray-300 leading-relaxed">
-                        Esta página está diseñada como tu centro de control para organizar la compra conjunta del nuevo y potente
-                        <strong class="text-raspberry">Raspberry Pi 5</strong> con tus amigos. Aquí podrás coordinar
-                        cuánto debe aportar cada uno, y establecer las reglas claras sobre
-                        la adquisición y la gestión del equipo. ¡Hagamos que esta compra sea un éxito!
+                        Este documento establece formalmente las condiciones y acuerdos para la adquisición conjunta del **Raspberry Pi 5** entre los participantes. El objetivo es coordinar los aportes financieros y definir los términos de uso y las políticas de desistimiento.
                     </p>
-                </div>
+                </section>
 
-                <!-- Direccionamientos (Enlaces de Navegación) -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">
-                    
-                    <!-- Plan de Compra -->
-                    <a onclick="navigateTo('plan')" href="#" class="group block p-6 bg-gray-700 border border-gray-600 rounded-xl hover:bg-raspberry hover:border-raspberry transition duration-300 card-shadow">
-                        <div class="text-3xl mb-3 text-raspberry group-hover:text-white transition duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.063 60.063 0 0 1 1.777-3.238c.47-.577.942-1.163 1.415-1.751m.222-.505 1.542-.771a3.533 3.533 0 0 1 4.316 1.096l4.244 5.253a1.5 1.5 0 0 0 2.228.188l2.977-2.977c.883-.883 1.258-2.071 1.055-3.256v-4.321c.218-.088.423-.2.613-.34a5.617 5.617 0 0 0 1.517-3.804c0-3.02-2.483-5.5-5.5-5.5-2.07 0-3.923 1.15-4.872 2.872L9 4.125A1.5 1.5 0 0 0 6.75 4.89V18.75Z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-2 text-white group-hover:text-white transition duration-300">
-                            Plan de compra
-                        </h3>
-                        <p class="text-sm text-gray-400 group-hover:text-white/80 transition duration-300">
-                            Detalles de costos, aportes de cada miembro y el estado actual de la vaquita.
-                        </p>
-                    </a>
-
-                    <!-- Servicios -->
-                    <a onclick="navigateTo('servicios')" href="#" class="group block p-6 bg-gray-700 border border-gray-600 rounded-xl hover:bg-raspberry hover:border-raspberry transition duration-300 card-shadow">
-                        <div class="text-3xl mb-3 text-raspberry group-hover:text-white transition duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5m-4.5 9.75H18m-9.75-6.75h9.75m-9.75 6h9.75m-9.75-3.5h9.75m-11.25-3.5h.008v.008H7.5m-.75 2.25h.008v.008H6.75M5.25 10.5h.008v.008H5.25m-1.5 2.25h.008v.008H3.75m1.5 2.25h.008v.008H5.25m-1.5 2.25h.008v.008H3.75M3 15.75V21a.75.75 0 0 0 .75.75h1.5a.75.75 0 0 0 .75-.75v-5.25H3Z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-2 text-white group-hover:text-white transition duration-300">
-                            Servicios
-                        </h3>
-                        <p class="text-sm text-gray-400 group-hover:text-white/80 transition duration-300">
-                            Detalle de la cuota de $2000 CLP para participantes casuales y gastos operativos.
-                        </p>
-                    </a>
-
-                    <!-- Plan de Devolución -->
-                    <a onclick="navigateTo('devolucion')" href="#" class="group block p-6 bg-gray-700 border border-gray-600 rounded-xl hover:bg-raspberry hover:border-raspberry transition duration-300 card-shadow">
-                        <div class="text-3xl mb-3 text-raspberry group-hover:text-white transition duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-semibold mb-2 text-white group-hover:text-white transition duration-300">
-                            Plan de devolución
-                        </h3>
-                        <p class="text-sm text-gray-400 group-hover:text-white/80 transition duration-300">
-                            Acuerdos sobre el reembolso si un participante desiste del servicio (50%).
-                        </p>
-                    </a>
-                </div>
-            `;
-        }
-
-        function getPlanDeCompraViewHtml(data) {
-            const plan = data;
-            // Nuevas variables para USD y Tasa
-            const costUSD = plan.costUSD || 0; 
-            const exchangeRateCLP = plan.exchangeRateCLP || 0; 
-
-            // Variables de cálculo (totalCost ahora es el valor calculado en CLP)
-            const totalCost = plan.totalCost || 0;
-            const participantCount = plan.participants.length;
-            const sharePerPerson = totalCost / (participantCount || 1);
-            const totalContributed = plan.participants.reduce((sum, p) => sum + p.contributed, 0);
-            const remaining = totalCost - totalContributed;
-            const progressPercent = totalCost > 0 ? (totalContributed / totalCost) * 100 : 0;
-
-            const currentParticipant = plan.participants.find(p => p.id === currentUserId);
-            const currentName = currentParticipant ? currentParticipant.name : '';
-            
-            // Renderiza la lista de participantes
-            const participantListHtml = plan.participants.map(p => {
-                const isMe = p.id === currentUserId;
-                const debt = sharePerPerson - p.contributed;
-                
-                let statusMessage;
-                let statusColor;
-
-                if (debt > 0) {
-                    statusMessage = `Debe $${debt.toFixed(2)} CLP`;
-                    statusColor = 'text-warning';
-                } else if (p.contributed > sharePerPerson) {
-                    statusMessage = `Cubrió extra: $${(p.contributed - sharePerPerson).toFixed(2)} CLP`;
-                    statusColor = 'text-success';
-                } else {
-                    statusMessage = 'Aporte Completo';
-                    statusColor = 'text-green-400';
-                }
-
-                // Botón de eliminar (solo si no ha aportado, sin importar el conteo)
-                const canRemove = p.contributed <= 0.01; // Permite un margen de error mínimo
-                
-                const deleteButton = canRemove ? `
-                    <button 
-                        onclick="handleRemoveParticipant('${p.id}', '${p.name}')" 
-                        class="p-2 ml-4 text-white bg-red-600 hover:bg-red-700 rounded-full transition duration-150 shadow-md" 
-                        title="Eliminar Participante">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.328A4.5 4.5 0 0 0 17.51 3H6.49M12 4.5l.75 3m-7.5 0h14.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-14.5a.75.75 0 0 1-.75-.75v-1.5a.75.75 0 0 1 .75-.75Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5h-16.5m16.5 0V19.5a2.25 2.25 0 0 1-2.25 2.25h-12a2.25 2.25 0 0 1-2.25-2.25V7.5" />
+                <!-- 1. Plan de Compra (Formal) -->
+                <section class="mb-12 p-6 bg-gray-700 rounded-xl border border-gray-600">
+                    <h2 class="text-2xl font-semibold text-white mb-4 border-b border-gray-600 pb-2 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-2 text-raspberry">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
-                    </button>
-                ` : `<div class="p-2 ml-4 w-5 h-5"></div>`; // Espaciador para alinear si el botón no está
-                
-                return `
-                    <li class="p-4 flex justify-between items-center bg-gray-700 rounded-lg border border-gray-600">
-                        <div class="flex-1">
-                            <span class="font-semibold text-white">${p.name} ${isMe ? '(Yo)' : ''}</span>
-                            <span class="block text-xs text-gray-400">ID: ${p.id.substring(0, 8)}...</span>
-                        </div>
-                        <div class="text-right flex items-center space-x-4">
-                            <div>
-                                <p class="text-lg font-bold text-gray-100">$${p.contributed.toFixed(2)} CLP</p>
-                                <p class="text-sm ${statusColor} font-medium">${statusMessage}</p>
-                            </div>
-                            ${deleteButton}
-                        </div>
-                    </li>
-                `;
-            }).join('');
-
-
-            return `
-                <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">
-                    Detalles del Plan de Compra
-                </h2>
-
-                <div class="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <!-- Tarjeta: Costo en USD -->
-                    <div class="p-4 bg-gray-700 rounded-xl">
-                        <p class="text-sm font-medium text-gray-400">Costo Base (USD)</p>
-                        <p class="text-2xl font-bold text-white">U$D ${costUSD.toFixed(2)}</p>
-                    </div>
-                    <!-- Tarjeta: Tasa de Cambio -->
-                    <div class="p-4 bg-yellow-900/40 rounded-xl border border-yellow-700">
-                        <p class="text-sm font-medium text-yellow-300">Dólar (CLP)</p>
-                        <p class="text-2xl font-bold text-yellow-100">$${exchangeRateCLP.toFixed(2)}</p>
-                    </div>
-                    <!-- Tarjeta: Costo Total (CLP) -->
-                    <div class="p-4 bg-blue-900/40 rounded-xl border border-blue-700">
-                        <p class="text-sm font-medium text-blue-300">Costo Total (CLP)</p>
-                        <p class="text-2xl font-bold text-blue-100">$${totalCost.toFixed(2)}</p>
-                    </div>
-                    <!-- Tarjeta: Cuota Individual (CLP) -->
-                    <div class="p-4 bg-green-900/40 rounded-xl border border-green-700">
-                        <p class="text-sm font-medium text-green-300">Cuota por Persona</p>
-                        <p class="text-2xl font-bold text-green-100">$${sharePerPerson.toFixed(2)}</p>
-                    </div>
-                </div>
-
-                <!-- Barra de Progreso -->
-                <div class="mb-8 p-4 bg-gray-700 rounded-xl">
-                    <div class="flex justify-between items-center mb-2">
-                        <p class="font-semibold text-white">Progreso de la Vaquita</p>
-                        <span class="text-lg font-bold text-raspberry">${progressPercent.toFixed(1)}%</span>
-                    </div>
-                    <div class="w-full bg-gray-600 rounded-full h-3">
-                        <div class="h-3 rounded-full bg-raspberry transition-all duration-700" style="width: ${Math.min(100, progressPercent)}%"></div>
-                    </div>
-                    <p class="text-sm text-gray-400 mt-2">Recaudado: $${totalContributed.toFixed(2)} CLP / Faltante: $${remaining.toFixed(2)} CLP</p>
-                </div>
-
-
-                <!-- Formulario de Configuración y Aporte -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <!-- Columna de Gestión -->
-                    <div class="p-6 bg-gray-700 rounded-xl border border-gray-600">
-                        <h3 class="text-xl font-semibold mb-4 text-white">Gestión de la Vaquita y Perfil</h3>
-                        
-                        <!-- Formulario de Cambio de Nombre -->
-                        <form id="name-form" class="space-y-4 mb-6 pb-4 border-b border-gray-600">
-                            <div>
-                                <label for="userName" class="block text-sm font-medium text-gray-300">Tu Nombre de Usuario</label>
-                                <input type="text" id="userName" value="${currentName}" class="mt-1 block w-full rounded-md shadow-sm p-2 border bg-dark-bg focus:ring-indigo-500 focus:border-indigo-500 text-white" required>
-                            </div>
-                            <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 focus:ring-offset-gray-700">
-                                Actualizar Nombre
-                            </button>
-                        </form>
-
-
-                        <h3 class="text-xl font-semibold mb-4 text-white">Configuración de Costo</h3>
-                        <form id="config-form" class="space-y-4">
-                            <div>
-                                <label for="costUSD" class="block text-sm font-medium text-gray-300">Costo del Raspberry Pi 5 (USD)</label>
-                                <input type="number" id="costUSD" value="${costUSD.toFixed(2)}" class="mt-1 block w-full rounded-md shadow-sm p-2 border bg-dark-bg focus:ring-raspberry focus:border-raspberry text-white" min="0" step="0.01">
-                            </div>
-                            <div>
-                                <label for="exchangeRateCLP" class="block text-sm font-medium text-gray-300">Tasa de Cambio (CLP por 1 USD)</label>
-                                <input type="number" id="exchangeRateCLP" value="${exchangeRateCLP.toFixed(2)}" class="mt-1 block w-full rounded-md shadow-sm p-2 border bg-dark-bg focus:ring-raspberry focus:border-raspberry text-white" min="0" step="0.01">
-                            </div>
-                            <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-raspberry hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-raspberry transition duration-150 focus:ring-offset-gray-700">
-                                Calcular y Guardar Costo Total CLP
-                            </button>
-                        </form>
-                        
-                        <hr class="my-6 border-gray-600">
-
-                        <h3 class="text-xl font-semibold mb-4 text-white">Registro de Aporte</h3>
-                        <form id="contribution-form" class="space-y-4">
-                            <div>
-                                <label for="contributionAmount" class="block text-sm font-medium text-gray-300">Monto a Aportar o Cubrir (CLP)</label>
-                                <input type="number" id="contributionAmount" placeholder="Ej: ${sharePerPerson.toFixed(2)}" class="mt-1 block w-full rounded-md shadow-sm p-2 border bg-dark-bg focus:ring-raspberry focus:border-raspberry text-white" min="0" step="0.01" required>
-                            </div>
-                            <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-success hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-success transition duration-150 focus:ring-offset-gray-700">
-                                Registrar mi Aporte
-                            </button>
-                        </form>
-                        <p id="plan-message" class="mt-2 text-sm text-center text-gray-400"></p>
-                    </div>
-
-                    <!-- Columna de Participantes -->
-                    <div>
-                        <h3 class="text-xl font-semibold mb-4 text-white">Estado de Participantes (${participantCount} / $${totalCost.toFixed(2)} CLP)</h3>
-                        <ul class="space-y-3">
-                            ${participantListHtml.length > 0 ? participantListHtml : '<li class="text-center py-4 text-gray-500 bg-gray-700 rounded-lg">Nadie ha aportado aún. ¡Sé el primero!</li>'}
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Botón de Regreso -->
-                <div class="mt-8 text-center">
-                     <button onclick="navigateTo('home')" class="py-2 px-6 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition duration-150 font-semibold">
-                        ← Volver al Inicio
-                     </button>
-                </div>
-            `;
-        }
-
-        function getDevolucionViewHtml(data) {
-            const plan = data;
-            const totalCost = plan.totalCost || 0;
-            const participantCount = plan.participants.length;
-            const sharePerPerson = totalCost / (participantCount || 1);
-            
-            // Cálculo del reembolso y el costo
-            const refundAmount = sharePerPerson * 0.50; // 50% de la cuota individual
-            const remainingParticipants = participantCount - 1;
-            const costPerRemaining = remainingParticipants > 0 ? refundAmount / remainingParticipants : 0;
-            
-            return `
-                <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">
-                    Plan de Devolución
-                </h2>
-                
-                <div class="bg-info/10 p-6 rounded-xl border border-info/50 mb-8">
-                    <h3 class="text-xl font-semibold text-info mb-3">Política de Reembolso</h3>
+                        Condiciones del Plan de Compra y Aporte
+                    </h2>
                     <p class="text-gray-300 leading-relaxed">
-                        Si un participante decide que ya no le interesa utilizar o ser parte del servicio/uso del Raspberry Pi 5, 
-                        tendrá derecho a un reembolso del <strong class="text-xl font-bold text-info">50%</strong> de su aporte individual.
-                    </p>
-                    <p class="mt-3 text-gray-300">
-                        El costo de este reembolso será cubierto a partes iguales por los 
-                        <strong class="font-semibold">participantes restantes</strong> del plan.
-                    </p>
-                    <div class="mt-4 p-3 bg-gray-700 rounded-lg border border-info/50">
-                        <p class="text-sm font-medium text-gray-200">Nota Importante:</p>
-                        <p class="text-xs text-gray-400">
-                            La gestión del reembolso (quién paga y a quién) se realiza manualmente entre los participantes. 
-                            Esta sección solo muestra los valores de cálculo basados en la configuración actual.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Detalles Financieros (Basado en la configuración actual) -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div class="p-4 bg-red-900/40 rounded-xl border border-red-700">
-                        <p class="text-sm font-medium text-red-300">Cuota Individual Total</p>
-                        <p class="text-2xl font-bold text-red-100">$${sharePerPerson.toFixed(2)} CLP</p>
-                    </div>
-                    <div class="p-4 bg-orange-900/40 rounded-xl border border-orange-700">
-                        <p class="text-sm font-medium text-orange-300">Monto de Reembolso (50%)</p>
-                        <p class="text-2xl font-bold text-orange-100">$${refundAmount.toFixed(2)} CLP</p>
-                    </div>
-                    <div class="p-4 bg-purple-900/40 rounded-xl border border-purple-700">
-                        <p class="text-sm font-medium text-purple-300">Costo por Participante Restante</p>
-                        <p class="text-2xl font-bold text-purple-100">$${costPerRemaining.toFixed(2)} CLP</p>
-                        <p class="text-xs text-purple-300">(${remainingParticipants} participantes restantes)</p>
-                    </div>
-                </div>
-
-                <div class="mt-8 text-center">
-                     <button onclick="navigateTo('home')" class="py-2 px-6 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition duration-150 font-semibold">
-                        ← Volver al Inicio
-                     </button>
-                </div>
-            `;
-        }
-
-        function getServiciosViewHtml() {
-            return `
-                <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">
-                    Servicios y Cuota de Mantenimiento
-                </h2>
-                
-                <div class="bg-blue-900/50 p-6 rounded-xl border border-blue-700 mb-8">
-                    <h3 class="text-xl font-semibold text-blue-300 mb-3 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-10.5-10.5 10.5zm10.5-10.5a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1 0 1.06l-10.5 10.5-5.69-5.69a.75.75 0 0 1 0-1.06l5.69-5.69a.75.75 0 0 1 1.06 0z" />
-                        </svg>
-                        Fondo para Gastos Operacionales
-                    </h3>
-                    <p class="text-lg text-gray-300 leading-relaxed">
-                        Para cualquier participante casual o nuevo que desee hacer uso de los servicios hospedados en el Raspberry Pi 5, 
-                        se establece una cuota única de <strong class="text-2xl font-bold text-blue-500">$2.000 CLP</strong>.
+                        El costo total del hardware (ejemplo: U$D ${PLAN_DATA.costUSD.toFixed(2)} con una tasa de cambio de ${PLAN_DATA.exchangeRateCLP.toFixed(2)} CLP/USD, resultando en un total de **$${totalCost.toFixed(2)} CLP**) 
+                        será dividido equitativamente entre los ${PLAN_DATA.participantCount} participantes, estableciendo una cuota individual de **$${sharePerPerson.toFixed(2)} CLP**.
                     </p>
                     <ul class="list-disc list-inside mt-4 text-gray-400 space-y-2">
-                        <li><strong class="font-semibold text-white">Objetivo del Fondo:</strong> Este dinero se destinará exclusivamente a cubrir gastos imprevistos y mejoras del equipo.</li>
-                        <li><strong class="font-semibold text-white">Gastos Cubiertos:</strong> Incluye la compra de cables, adaptadores, tarjetas de memoria, ventiladores de refrigeración, o futuras actualizaciones del hardware (si se acuerda).</li>
-                        <li><strong class="font-semibold text-white">Transparencia:</strong> Los participantes originales (los de la vaquita principal) son responsables de administrar y documentar el uso de este fondo.</li>
+                        <li><strong class="text-white">Aportación Proporcional:</strong> Se requiere un aporte idéntico por parte de cada socio.</li>
+                        <li><strong class="text-white">Mecanismo de Subrogación Financiera:</strong> En caso de que un participante no pueda cumplir con el plazo de pago, se permite que otros miembros cubran temporalmente el monto faltante para asegurar la adquisición. El participante con la obligación pendiente deberá reembolsar la totalidad de dicho monto directamente a la persona que realizó el pago en su nombre.</li>
                     </ul>
-                </div>
-                
-                <div class="mt-8 text-center">
-                     <button onclick="navigateTo('home')" class="py-2 px-6 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition duration-150 font-semibold">
-                        ← Volver al Inicio
-                     </button>
-                </div>
+                </section>
+
+                <!-- 2. Servicios (Formal) -->
+                <section class="mb-12 p-6 bg-blue-900/50 rounded-xl border border-blue-700">
+                    <h2 class="text-2xl font-semibold text-white mb-4 border-b border-blue-700 pb-2 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-2 text-blue-300">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 10.5h-16.5m16.5 0s1.5-2.25 1.5-4.5c0-1.27-.67-2.73-1.6-3.86a4.53 4.53 0 0 0-5.83-1.07l-2.07 1.07-2.07-1.07a4.53 4.53 0 0 0-5.83 1.07c-.93 1.13-1.6 2.59-1.6 3.86 0 2.25 1.5 4.5 1.5 4.5m16.5 0h-16.5m16.5 0a3.75 3.75 0 0 0-3.75-3.75H7.5A3.75 3.75 0 0 0 3.75 10.5v1.5a1.5 1.5 0 0 0 1.5 1.5h15.0a1.5 1.5 0 0 0 1.5-1.5v-1.5Z" />
+                        </svg>
+                        Términos de Servicios y Mantenimiento
+                    </h2>
+                    <p class="text-gray-300 leading-relaxed">
+                        Se ha establecido una cuota de servicio para participantes secundarios o casuales que accedan a los recursos hospedados en el Raspberry Pi 5.
+                    </p>
+                    <ul class="list-disc list-inside mt-4 text-gray-400 space-y-2">
+                        <li><strong class="text-white">Cuota de Acceso:</strong> Los usuarios no fundadores pagarán una cuota única de **$2.000 CLP** para el acceso a los servicios.</li>
+                        <li><strong class="text-white">Destino del Fondo:</strong> Este capital se destinará exclusivamente a cubrir gastos operativos, reparaciones, mejoras de infraestructura (cables, ventilación, etc.) y la adquisición de componentes periféricos para la expansión del sistema.</li>
+                    </ul>
+                </section>
+
+                <!-- 3. Plan de Devolución (Formal) -->
+                <section class="p-6 bg-red-900/50 rounded-xl border border-red-700">
+                    <h2 class="text-2xl font-semibold text-white mb-4 border-b border-red-700 pb-2 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-2 text-red-300">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                        Protocolo de Desistimiento y Reembolso
+                    </h2>
+                    <p class="text-gray-300 leading-relaxed">
+                        En el evento de que un participante decida retirarse del proyecto y renunciar a los derechos de uso del Raspberry Pi 5, se aplicará el siguiente protocolo de reembolso:
+                    </p>
+                    <ul class="list-disc list-inside mt-4 text-gray-400 space-y-2">
+                        <li><strong class="text-white">Tasa de Reembolso:</strong> Se realizará una devolución del **50%** del capital aportado individualmente, lo que asciende a **$${(sharePerPerson * 0.50).toFixed(2)} CLP**.</li>
+                        <li><strong class="text-white">Financiación del Reembolso:</strong> El monto a reembolsar será sufragado a prorrata por el resto de los participantes fundadores del plan de compra. El socio que desiste queda eximido de la contribución a su propio reembolso.</li>
+                    </ul>
+                </section>
             `;
         }
 
-        function getPlaceholderViewHtml(title) {
-            return `
-                <div class="text-center py-20 bg-gray-700 rounded-xl">
-                    <span class="text-6xl text-gray-500 block mb-4">🛠️</span>
-                    <h2 class="text-2xl font-bold text-gray-200 mb-2">${title}</h2>
-                    <p class="text-gray-400">Esta sección se está construyendo. Vuelve pronto.</p>
-                </div>
-            `;
-        }
-
-
-        // --- FUNCIONES DE NAVEGACIÓN Y RENDERIZADO ---
-
-        function navigateTo(viewName) {
-            appState.view = viewName;
-            renderView(viewName);
-        }
-        
-        window.navigateTo = navigateTo; // Exponer al scope global para que funcione en el HTML
-
-        function renderView(viewName) {
+        // --- INICIO DE LA APLICACIÓN (Carga de la vista única) ---
+        function renderSinglePage() {
             const contentDiv = document.getElementById('app-content');
-            
-            // Eliminar la clase fade-in para resetear la animación
-            contentDiv.classList.remove('fade-in'); 
-
-            let htmlContent = '';
-            let title = 'Vaquita Raspberry Pi 5';
-            
-            // Actualizar la barra de navegación para todas las vistas excepto 'home'
-            const navbar = document.getElementById('navbar');
-            if (viewName === 'home') {
-                 navbar.classList.add('hidden');
-            } else {
-                 navbar.classList.remove('hidden');
-            }
-
-            // Seleccionar contenido
-            if (viewName === 'plan' && appState.planData) {
-                htmlContent = getPlanDeCompraViewHtml(appState.planData);
-                title = 'Plan de Compra';
-            } else if (viewName === 'devolucion' && appState.planData) {
-                htmlContent = getDevolucionViewHtml(appState.planData);
-                title = 'Plan de Devolución';
-            } else if (viewName === 'servicios') {
-                htmlContent = getServiciosViewHtml();
-                title = 'Servicios del Raspberry Pi 5';
-            } else if (viewName === 'home') {
-                htmlContent = getHomeViewHtml();
-            } else {
-                htmlContent = '<p class="text-center py-10 text-red-500">Cargando datos o vista no encontrada...</p>';
-            }
-
-            // Renderizar y añadir clase de animación
-            contentDiv.innerHTML = htmlContent;
-            document.title = title;
-            setTimeout(() => contentDiv.classList.add('fade-in'), 50); // Pequeño retraso para asegurar el reset
-            
-            // Re-adjuntar listeners si la vista es 'plan' o 'devolucion'
-            if (viewName === 'plan' && appState.planData) {
-                attachPlanViewListeners();
-            }
+            contentDiv.innerHTML = getHomeViewHtml();
         }
 
-
-        // --- LÓGICA DE FIREBASE Y DATA ---
-
-        function setupPlanDataListener() {
-            if (!appState.isAuthReady || !db) return;
-
-            const docRef = doc(db, FIREBASE_COLLECTION_PATH, FIREBASE_DOC_ID);
-
-            // Iniciar con un valor por defecto si no existe (solo se ejecuta si el documento no existe)
-            // Valores iniciales en CLP y USD
-            const defaultPlanData = {
-                totalCost: 142500.00, // (150 USD * 950 CLP - Ejemplo)
-                costUSD: 150.00,
-                exchangeRateCLP: 950.00,
-                participants: [],
-            };
-
-            // Escuchador en tiempo real
-            onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    // Cargar datos existentes
-                    const data = docSnap.data();
-                    
-                    // Asegurar que mi ID esté en la lista de participantes si no lo está
-                    if (!data.participants.some(p => p.id === currentUserId)) {
-                        const myExistingName = data.participants.find(p => p.id === currentUserId)?.name || `Usuario ${currentUserId.substring(0, 4)}`;
-                        data.participants.push({
-                            id: currentUserId,
-                            name: myExistingName,
-                            contributed: 0,
-                        });
-                        // Forzar la actualización inmediata para incluirme
-                        savePlanData(data);
-                        return; // Evita el renderizado doble
-                    }
-                    appState.planData = data;
-                } else {
-                    // Documento no existe, crearlo con el valor por defecto, incluyéndome
-                    defaultPlanData.participants.push({
-                        id: currentUserId,
-                        name: `Usuario ${currentUserId.substring(0, 4)}`,
-                        contributed: 0,
-                    });
-                    setDoc(docRef, defaultPlanData)
-                        .then(() => console.log("Documento inicial de plan creado."))
-                        .catch(e => console.error("Error creando el documento inicial:", e));
-                    appState.planData = defaultPlanData; // Usar el valor por defecto para el primer render
-                }
-                
-                // Si estamos en la vista del plan, devolucion o servicios, re-renderizar para mostrar los datos actualizados
-                if (appState.view === 'plan' || appState.view === 'devolucion' || appState.view === 'servicios') {
-                    renderView(appState.view);
-                } else if (appState.view === 'home' && !appState.planData) {
-                    // Si es el primer load, renderiza la vista de inicio
-                    renderView('home');
-                }
-
-            }, (error) => {
-                console.error("Error al escuchar cambios en Firestore:", error);
-            });
-        }
-
-        function savePlanData(data) {
-            if (!db || !currentUserId) {
-                console.error("Firebase no está listo o el usuario no está autenticado.");
-                return;
-            }
-            const docRef = doc(db, FIREBASE_COLLECTION_PATH, FIREBASE_DOC_ID);
-            // setDoc sobrescribe, updateDoc actualiza parcialmente. Usaremos setDoc para simplicidad aquí.
-            return setDoc(docRef, data);
-        }
-        
-        // --- LISTENERS DE LA VISTA 'PLAN DE COMPRA' ---
-
-        function attachPlanViewListeners() {
-            const configForm = document.getElementById('config-form');
-            if (configForm) {
-                configForm.addEventListener('submit', handleConfigSubmit);
-            }
-
-            const contributionForm = document.getElementById('contribution-form');
-            if (contributionForm) {
-                contributionForm.addEventListener('submit', handleContributionSubmit);
-            }
-            
-            const nameForm = document.getElementById('name-form');
-            if (nameForm) {
-                nameForm.addEventListener('submit', handleNameChange);
-            }
-        }
-        
-        // Manejador del formulario de Nombre
-        function handleNameChange(event) {
-            event.preventDefault();
-            const newName = document.getElementById('userName').value.trim();
-            const messageElement = document.getElementById('plan-message');
-            
-            if (newName.length < 2) {
-                messageElement.textContent = "Error: El nombre debe tener al menos 2 caracteres.";
-                messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-100 p-2 rounded';
-                return;
-            }
-
-            const newData = JSON.parse(JSON.stringify(appState.planData));
-            const myIndex = newData.participants.findIndex(p => p.id === currentUserId);
-
-            if (myIndex !== -1) {
-                newData.participants[myIndex].name = newName;
-                
-                savePlanData(newData)
-                    .then(() => {
-                        messageElement.textContent = `Nombre de usuario actualizado a "${newName}".`;
-                        messageElement.className = 'mt-2 text-sm text-center text-success bg-green-900/40 text-green-300 p-2 rounded';
-                    })
-                    .catch(e => {
-                        console.error("Error al guardar el nombre:", e);
-                        messageElement.textContent = "Error al guardar el nombre en la base de datos.";
-                        messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-900/40 p-2 rounded';
-                    });
-            } else {
-                messageElement.textContent = "Error: Tu usuario no está listado en el plan.";
-                messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-900/40 p-2 rounded';
-            }
-        }
-
-        // Manejador del formulario de Costo Total
-        function handleConfigSubmit(event) {
-            event.preventDefault();
-            const messageElement = document.getElementById('plan-message');
-
-            // Leer los nuevos campos
-            const costUSD = parseFloat(document.getElementById('costUSD').value);
-            const exchangeRateCLP = parseFloat(document.getElementById('exchangeRateCLP').value);
-            
-            if (isNaN(costUSD) || costUSD < 0 || isNaN(exchangeRateCLP) || exchangeRateCLP <= 0) {
-                messageElement.textContent = "Error: Asegúrate de que el costo y la tasa de cambio sean valores válidos y positivos.";
-                messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-900/40 p-2 rounded';
-                return;
-            }
-
-            // 1. Cálculo del costo total en CLP
-            const newTotalCostCLP = costUSD * exchangeRateCLP;
-            
-            // 2. Crear el nuevo objeto de datos
-            const newData = { 
-                ...appState.planData, 
-                totalCost: newTotalCostCLP,
-                costUSD: costUSD,
-                exchangeRateCLP: exchangeRateCLP
-            };
-
-            // 3. Guardar los datos actualizados
-            savePlanData(newData)
-                .then(() => {
-                    messageElement.textContent = `Costo total actualizado a $${newTotalCostCLP.toFixed(2)} CLP.`;
-                    messageElement.className = 'mt-2 text-sm text-center text-success bg-green-900/40 text-green-300 p-2 rounded';
-                })
-                .catch(e => {
-                    console.error("Error al guardar el costo:", e);
-                    messageElement.textContent = "Error al guardar el costo en la base de datos.";
-                    messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-900/40 p-2 rounded';
-                });
-        }
-
-        // Manejador del formulario de Aporte
-        function handleContributionSubmit(event) {
-            event.preventDefault();
-            const contributionAmount = parseFloat(document.getElementById('contributionAmount').value);
-            const messageElement = document.getElementById('plan-message');
-
-            if (isNaN(contributionAmount) || contributionAmount <= 0) {
-                messageElement.textContent = "¡Introduce un monto válido!";
-                messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-900/40 p-2 rounded';
-                return;
-            }
-
-            // 1. Clonar los datos actuales
-            const newData = JSON.parse(JSON.stringify(appState.planData));
-            
-            // 2. Encontrar el índice del usuario actual
-            const myIndex = newData.participants.findIndex(p => p.id === currentUserId);
-
-            if (myIndex !== -1) {
-                // 3. Sumar el nuevo aporte al total contribuido
-                // Nota: Los aportes se registran en CLP, que es la moneda base de la "Vaquita"
-                newData.participants[myIndex].contributed += contributionAmount;
-                
-                // 4. Guardar los datos actualizados
-                savePlanData(newData)
-                    .then(() => {
-                        console.log("Aporte registrado con éxito.");
-                        messageElement.textContent = `Aporte de $${contributionAmount.toFixed(2)} CLP registrado. ¡Gracias!`;
-                        messageElement.className = 'mt-2 text-sm text-center text-success bg-green-900/40 text-green-300 p-2 rounded';
-                        document.getElementById('contributionAmount').value = ''; // Limpiar campo
-                    })
-                    .catch(e => {
-                        console.error("Error al registrar el aporte:", e);
-                        messageElement.textContent = "Error al guardar el aporte.";
-                        messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-900/40 p-2 rounded';
-                    });
-            } else {
-                messageElement.textContent = "Error: Tu usuario no está listado en el plan.";
-                messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-900/40 p-2 rounded';
-            }
-        }
-
-        // Nueva función para eliminar participantes
-        window.handleRemoveParticipant = async function(participantId, participantName) {
-            const messageElement = document.getElementById('plan-message');
-            messageElement.className = 'mt-2 text-sm text-center text-gray-600';
-            
-            // 1. Clonar los datos actuales
-            const newData = JSON.parse(JSON.stringify(appState.planData));
-            
-            // 2. Encontrar el participante
-            const participant = newData.participants.find(p => p.id === participantId);
-
-            if (!participant) {
-                messageElement.textContent = "Error: Participante no encontrado.";
-                messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-900/40 p-2 rounded';
-                return;
-            }
-
-            // 3. Verificar si ya ha contribuido (con un pequeño margen de error)
-            if (participant.contributed > 0.01) {
-                messageElement.textContent = `Error: ${participantName} ya ha contribuido $${participant.contributed.toFixed(2)} CLP. No se puede eliminar. ¡El aporte debe ser $0 primero!`;
-                messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-900/40 p-2 rounded';
-                return;
-            }
-            
-            // 4. Filtrar y eliminar
-            newData.participants = newData.participants.filter(p => p.id !== participantId);
-
-            // 5. Guardar los datos actualizados
-            try {
-                await savePlanData(newData);
-                messageElement.textContent = `${participantName} eliminado con éxito del plan.`;
-                messageElement.className = 'mt-2 text-sm text-center text-success bg-green-900/40 text-green-300 p-2 rounded';
-            } catch (e) {
-                console.error("Error al eliminar el participante:", e);
-                messageElement.textContent = "Error al guardar los cambios en la base de datos.";
-                messageElement.className = 'mt-2 text-sm text-center text-red-500 bg-red-900/40 p-2 rounded';
-            }
-        }
-
-
-        // --- INICIO DE LA APLICACIÓN ---
-        initFirebase();
-        // La función setupPlanDataListener se encarga de renderizar la primera vista después de la autenticación.
-
+        document.addEventListener('DOMContentLoaded', renderSinglePage);
     </script>
 </body>
 </html>
